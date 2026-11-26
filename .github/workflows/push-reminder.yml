@@ -1,0 +1,36 @@
+# 家庭药管家 · 订阅消息定时推送
+# 每 10 分钟跑一次（GitHub cron 最小 5 分钟粒度，且有 0~15 分钟执行延迟，属正常现象）。
+# 秘钥全部来自仓库 Secrets，代码里不落任何密钥。
+name: medicine-push-reminder
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}   # 支持在 Actions 页手动点「Run workflow」测试
+
+permissions:
+  contents: read
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 执行推送
+        env:
+          WB_BOT_EMAIL: ${{ secrets.WB_BOT_EMAIL }}
+          WB_BOT_PASSWORD: ${{ secrets.WB_BOT_PASSWORD }}
+          WXA_APPID: ${{ secrets.WXA_APPID }}
+          WXA_APP_SECRET: ${{ secrets.WXA_APP_SECRET }}
+          WXA_TEMPLATE_ID: ${{ secrets.WXA_TEMPLATE_ID }}
+          TEMPLATE_KEYS: ${{ secrets.TEMPLATE_KEYS }}
+          MINIPROGRAM_STATE: ${{ secrets.MINIPROGRAM_STATE }}
+        run: node push-worker/index.mjs
